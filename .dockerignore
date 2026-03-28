@@ -1,0 +1,25 @@
+# VCS
+.git
+.gitignore
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Local environments
+venv/
+.venv/
+
+# Local data / artifacts
+data/
+*.pkl
+*.log
+
+# Editor files
+.vscode/
+.idea/
+
+# Misc
+README.md

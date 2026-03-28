@@ -12,6 +12,7 @@ from app.core.config import settings
 from app.core.logging import setup_logging
 from app.core.security import add_cors_middleware
 from app.api.v1 import router as v1_router
+from app.db.faiss_index import get_faiss_index
 
 # Setup logging
 logger = setup_logging(
@@ -102,6 +103,17 @@ async def startup_event():
     logger.info(f"Starting {settings.APP_NAME} v{settings.API_VERSION}")
     logger.info(f"Debug mode: {settings.DEBUG}")
     logger.info(f"Server will run on {settings.HOST}:{settings.PORT}")
+
+    faiss_index = get_faiss_index()
+    loaded = faiss_index.load_index()
+    if loaded:
+        info = faiss_index.get_index_info()
+        logger.info(
+            "Loaded persisted FAISS index with %s vectors",
+            info.get("num_vectors", 0),
+        )
+    else:
+        logger.info("No persisted FAISS index found. Waiting for manual uploads.")
 
 
 # Shutdown event

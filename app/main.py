@@ -103,6 +103,8 @@ async def startup_event():
     logger.info(f"Starting {settings.APP_NAME} v{settings.API_VERSION}")
     logger.info(f"Debug mode: {settings.DEBUG}")
     logger.info(f"Server will run on {settings.HOST}:{settings.PORT}")
+    if not settings.GROQ_API_KEY:
+        logger.warning("GROQ_API_KEY is not configured. /v1/rag/query will fail until it is set.")
 
     faiss_index = get_faiss_index()
     loaded = faiss_index.load_index()

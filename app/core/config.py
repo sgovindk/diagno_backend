@@ -25,11 +25,19 @@ class Settings(BaseSettings):
     GROQ_API_KEY: str
     GROQ_MODEL: str = "llama-3.1-8b-instant"
     GROQ_TIMEOUT: int = 30
+    GROQ_SYSTEM_PROMPT: str = (
+        "You are an expert electrical diagnostic assistant. "
+        "Answer only using the provided context. "
+        "If unsure, say you don't know. "
+        "Keep responses concise, accurate, and safe."
+    )
+    GROQ_UNKNOWN_ANSWER: str = "I don't know based on the provided documents."
     
     # RAG Configuration
     TOP_K: int = 3
     CHUNK_SIZE: int = 500
     CHUNK_OVERLAP: int = 100
+    MAX_CONTEXT_CHARS: int = 6000
     
     # FAISS Configuration
     FAISS_INDEX_PATH: str = "data/faiss_index.pkl"

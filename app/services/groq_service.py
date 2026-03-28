@@ -3,7 +3,7 @@ Groq LLM service for generating responses.
 Integrates with Groq API for llama model inference.
 """
 
-from typing import Optional
+from typing import Optional, List
 from groq import Groq, AsyncGroq
 from app.core.config import settings
 from app.core.logging import get_logger
@@ -16,11 +16,6 @@ class GroqService:
     Service for interacting with Groq LLM API.
     Provides async and sync methods for text generation.
     """
-    
-    SYSTEM_PROMPT = """You are an expert electrical diagnostic assistant. 
-You have access to technical manuals and diagnostic procedures. 
-Answer only using the provided context. If the information is not in the context, say "I don't have information about this in the available manuals."
-Be concise, accurate, and helpful. Provide step-by-step procedures when applicable."""
     
     def __init__(self, api_key: str = settings.GROQ_API_KEY, model: str = settings.GROQ_MODEL):
         """
@@ -38,11 +33,43 @@ Be concise, accurate, and helpful. Provide step-by-step procedures when applicab
         self.client = Groq(api_key=api_key)
         self.async_client = AsyncGroq(api_key=api_key)
         logger.info(f"Groq service initialized with model: {model}")
+
+    def _build_system_prompt(
+        self,
+        rules: Optional[List[str]] = None,
+        definitions: Optional[List[str]] = None,
+    ) -> str:
+        """
+        Build final system prompt using global policy plus app-provided constraints.
+
+        Args:
+            rules: Optional response rules from client app.
+            definitions: Optional domain definitions from client app.
+
+        Returns:
+            Final system prompt text.
+        """
+        lines: List[str] = [settings.GROQ_SYSTEM_PROMPT.strip()]
+        lines.append(
+            f"If the answer is not in context, reply exactly: '{settings.GROQ_UNKNOWN_ANSWER}'"
+        )
+
+        if rules:
+            lines.append("Additional response rules:")
+            lines.extend([f"- {rule}" for rule in rules if rule.strip()])
+
+        if definitions:
+            lines.append("Domain definitions:")
+            lines.extend([f"- {item}" for item in definitions if item.strip()])
+
+        return "\n".join(lines)
     
     def generate_answer(
         self,
         query: str,
         context: str,
+        rules: Optional[List[str]] = None,
+        definitions: Optional[List[str]] = None,
         temperature: float = 0.7,
         max_tokens: int = 500
     ) -> str:
@@ -66,11 +93,12 @@ Be concise, accurate, and helpful. Provide step-by-step procedures when applicab
 {context}
 
 Question: {query}"""
+            system_prompt = self._build_system_prompt(rules=rules, definitions=definitions)
 
             message = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
-                    {"role": "system", "content": self.SYSTEM_PROMPT},
+                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_message}
                 ],
                 temperature=temperature,
@@ -90,6 +118,8 @@ Question: {query}"""
         self,
         query: str,
         context: str,
+        rules: Optional[List[str]] = None,
+        definitions: Optional[List[str]] = None,
         temperature: float = 0.7,
         max_tokens: int = 500
     ) -> str:
@@ -113,11 +143,12 @@ Question: {query}"""
 {context}
 
 Question: {query}"""
+            system_prompt = self._build_system_prompt(rules=rules, definitions=definitions)
 
             message = await self.async_client.chat.completions.create(
                 model=self.model,
                 messages=[
-                    {"role": "system", "content": self.SYSTEM_PROMPT},
+                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_message}
                 ],
                 temperature=temperature,

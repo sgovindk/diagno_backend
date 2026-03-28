@@ -3,7 +3,7 @@ RAG service - orchestrates RAG pipeline.
 Handles query embedding, retrieval, and LLM generation.
 """
 
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 from app.services.embedding_service import get_embedding_service
 from app.services.groq_service import get_groq_service
 from app.db.faiss_index import get_faiss_index
@@ -25,7 +25,13 @@ class RAGService:
         self.groq_service = get_groq_service()
         self.faiss_index = get_faiss_index()
     
-    async def query(self, question: str, top_k: int = None) -> Tuple[str, List[Source]]:
+    async def query(
+        self,
+        question: str,
+        top_k: Optional[int] = None,
+        rules: Optional[List[str]] = None,
+        definitions: Optional[List[str]] = None,
+    ) -> Tuple[str, List[Source]]:
         """
         Execute RAG pipeline: embed query -> retrieve -> generate answer.
         
@@ -84,13 +90,16 @@ class RAGService:
                 ))
             
             context = "\n\n".join(context_parts)
+            context = context[: settings.MAX_CONTEXT_CHARS]
             
             # Step 4: Generate answer using Groq LLM
             logger.debug("Step 4: Generating answer with Groq LLM...")
             answer = await self.groq_service.generate_answer_async(
                 query=question,
                 context=context,
-                temperature=0.7,
+                rules=rules,
+                definitions=definitions,
+                temperature=0.2,
                 max_tokens=500
             )
             

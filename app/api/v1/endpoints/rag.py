@@ -3,7 +3,7 @@ RAG query endpoint - Retrieval Augmented Generation.
 Retrieves relevant documents and generates LLM responses.
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException
 from app.schemas.rag import RAGQueryRequest, RAGQueryResponse
 from app.services.rag_service import get_rag_service
 from app.core.logging import get_logger
@@ -39,7 +39,12 @@ async def rag_query(request: RAGQueryRequest) -> RAGQueryResponse:
         
         # Get RAG service and execute query
         rag_service = get_rag_service()
-        answer, sources = await rag_service.query(question)
+        answer, sources = await rag_service.query(
+            question=question,
+            top_k=request.top_k,
+            rules=request.rules,
+            definitions=request.definitions,
+        )
         
         response = RAGQueryResponse(
             answer=answer,

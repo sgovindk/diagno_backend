@@ -14,11 +14,23 @@ class RAGQueryRequest(BaseModel):
         query: User question to answer using RAG
     """
     query: str = Field(..., min_length=1, max_length=500, description="User question")
+    top_k: Optional[int] = Field(default=None, ge=1, le=10, description="Optional retrieval depth override")
+    rules: List[str] = Field(default_factory=list, description="Optional app-provided response rules")
+    definitions: List[str] = Field(default_factory=list, description="Optional app-provided domain definitions")
     
     class Config:
         json_schema_extra = {
             "example": {
-                "query": "What is the procedure for circuit breaker troubleshooting?"
+                "query": "What is the procedure for circuit breaker troubleshooting?",
+                "top_k": 3,
+                "rules": [
+                    "Return steps as numbered list",
+                    "Do not mention information outside context"
+                ],
+                "definitions": [
+                    "MCB means miniature circuit breaker",
+                    "Trip means automatic open due to fault"
+                ]
             }
         }
 
